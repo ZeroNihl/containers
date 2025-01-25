@@ -1,0 +1,35 @@
+FROM ubuntu:22.04
+
+# Set noninteractive installation
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Arguments with defaults
+ARG USERNAME=developer
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+ARG USER_PASSWORD=password
+ARG WORKSPACE_DIR=/home/$USERNAME/workspace
+
+# Install minimal dependencies
+RUN apt-get update && apt-get install -y \
+    sudo \
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    && echo $USERNAME:$USER_PASSWORD | chpasswd \
+    && echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Create workspace directory
+RUN mkdir -p $WORKSPACE_DIR \
+    && chown $USERNAME:$USERNAME $WORKSPACE_DIR
+
+# Switch to non-root user
+USER $USERNAME
+WORKDIR $WORKSPACE_DIR
+
+# Keep container running
+CMD ["sleep", "infinity"]
